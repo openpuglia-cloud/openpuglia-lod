@@ -62,6 +62,16 @@
    :rows  (csv/read-csv (io/reader file))})
 
 (defn splitted-file [map]
+  "
+  the map in input is the output of ingested-file
+  Returns a map with these keys
+  {
+    :file-name
+    :file
+    :file-headers
+    :file-body
+  }
+  "
   (let [rows (map :rows)
         headers (file-headers rows)
         body (file-body rows)]
@@ -71,6 +81,16 @@
 
 
 (defn added-file-order [current-map]
+  "
+  the map in input is the output of splitted-file
+  Returns a map with these keys
+  {
+    :file-name
+    :file
+    :order
+    :file-body
+  }
+  "
   (dissoc
    (assoc current-map :order (file-order (:file-headers current-map) pollutants))
    :file-headers))
@@ -95,10 +115,38 @@
     (path index)))
 
 (defn station [current-map]
+  "
+  the map in input is the output of file-order
+  Returns a map with these keys
+  {
+    :file-name
+    :file
+    :order
+    :station
+    :file-body
+  }
+  "
+
   (assoc current-map :station (new-extracted-station-name (:file current-map))))
 
 
 (defn line-numbers [current-map]
+  "
+  the map in input is the output of station
+  Returns a collection of maps, each with these keys
+  {
+    :file-name
+    :file
+    :order
+    :station
+    :line-number
+    :row
+  }
+
+  This is the first function in the pipeline that takes a map representing a file and returns a collection of maps, each representing A ROW in that file
+
+:TODO this could probably be refactored with map-indexed
+  "
   (defn per-row [row number]
     {:file-name (:file-name current-map)
      :file (:file current-map)
@@ -110,6 +158,11 @@
   (let [rows (:file-body current-map)
         numbers (range 1 (+ (count rows) 1 ))]
     (map per-row rows numbers)))
+
+
+
+
+
 
 (defn files-collection [path filter-function]
   (filter
